@@ -376,3 +376,33 @@ def test_editing_rules_json_on_disk_fails_check_hashes(tmp_path):
     rules.write_text(text)
     assert run("-m", "trapworld.run_grid", "--check-hashes",
                "--out", str(out_dir)).returncode == 0
+
+
+# ------------------------------------------------------ 5. post-run derivation (spec 11 A7)
+def test_derive_adds_sample_truth_flags_and_rebuilds_the_summary(smoke):
+    from trapworld import derive
+
+    assert derive.main(["--out", str(smoke)]) == 0
+    payload = json.loads((smoke / "grid" / "B_G2.json").read_text())
+    assert payload["derived"]["fields"] == list(derive.DERIVED_FIELDS)
+    for rec in payload["records"]:
+        for name, block in rec["analyzers"].items():
+            assert "bias_sample" in block and "abs_bias_sample_ok" in block, name
+            if block.get("var_theta_hat") is not None:
+                assert block["bias_sample"] == pytest.approx(
+                    block["var_theta_hat"] - rec["var_theta_sample"])
+            if "status_B" in block:
+                assert "false_confidence_sample" in block
+                assert "false_refusal_sample" in block
+        assert "false_conf_0.3_sample" in rec["analyzers"]["naive"]
+    agg = payload["aggregate"]["analyzers"]["agentsem"]
+    assert "bias_sample" in agg and "false_confidence_sample" in agg
+    summary = json.loads((smoke / "summary.json").read_text())
+    assert summary["derived_fields"] == list(derive.DERIVED_FIELDS)
+    assert "exploratory" in summary["derived_note"]
+    with open(smoke / "summary.csv", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    assert "bias_sample_mean" in rows[0]
+    assert (smoke / "derived_manifest.json").exists()
+    # the run's own record of itself is untouched by the derivation
+    assert json.loads((smoke / "hashes.json").read_text())["hashes_match"] is True

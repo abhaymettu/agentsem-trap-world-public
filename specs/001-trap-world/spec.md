@@ -404,6 +404,17 @@ is dated here so the pre-registration record is complete.
   is the bootstrap CI (F17).
 - **A5 Sweep J cells and the Jev policy configuration are hashed into `results/hashes.json`** alongside the
   frozen objects of section 9.
+- **A7 Derived sample-truth flags (section 7), 2026-09-16 23:15, post-run and exploratory.** The
+  first finished cell (kappa 1, psi 0, 500 replicates) showed the pre-registered per-replicate
+  flags firing on sampling noise: mean bias 0.007 for `agentsem` and 0.021 for `naive` against a
+  false-confidence rate near 0.39 for both, because the realized `Var(theta)` of 200 drawn persons
+  sits about 0.10 from the population value on average, the size of the tolerance. Every record
+  already stores that realized variance (`var_theta_sample`), so `trapworld/derive.py` adds the same
+  flags against it with the suffix `_sample` (`bias_sample`, `abs_bias_sample_ok`,
+  `false_confidence_sample`, `false_refusal_sample`, `false_conf_{tau}_sample`) and rebuilds the
+  summary from the per-cell files. The pre-registered fields are kept and reported first; the
+  `_sample` fields were defined after results were seen and are labelled exploratory everywhere
+  they appear. No stored estimate changes; no hashed object changes.
 - **A6 Runtime halving rule relaxed (section 6), 2026-09-16 22:40.** The 3 s per-replicate rule halved
   cells during the first grid attempt because unrelated processes were loading the machine (replicates
   cost 1.3 s in one process and 2.0 s on an idle pool); the threshold is 8 s for the run that produced

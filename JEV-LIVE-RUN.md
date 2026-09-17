@@ -30,8 +30,14 @@ process, read from the vault's read command inline, with a leading space so the 
 the line out of history:
 
 ```
-  TYPESAFE_API_KEY="$(<vault read command>)" .venv/bin/python -m trapworld.run_grid --cells J_live --jev live
+  TYPESAFE_API_KEY="$(<vault read command>)" .venv/bin/python -m trapworld.run_grid --cells J_live --jev live --out results/jev-live
 ```
+
+Use a separate `--out` directory. The runner writes `summary.csv`, `summary.json` and
+`run_manifest.json` per invocation, so a `--cells` run into `results/` would overwrite the
+deterministic grid's summary with a one-cell summary. Merging the live cell's row into the main
+summary is a follow-up (a `--summarize` mode that rebuilds the summary from every
+`results/grid/*.json`); until it exists, the live cell is reported from its own directory.
 
 The leading space is load bearing (`HISTCONTROL`/`setopt histignorespace` must be on in the
 shell doing this; check before, not after).
