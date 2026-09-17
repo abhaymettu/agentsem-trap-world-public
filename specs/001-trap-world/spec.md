@@ -364,3 +364,43 @@ every between-arm difference (paired by replicate seed where arms share draws).
 - Occasions are days; no missingness; no ESM compliance mechanism (S10 position 3 recorded as open).
 - The analyst's naive arm analyses the adaptive phase (the deployed system); the pooled variant is secondary.
 - Bootstrap only in three audit cells for runtime; Hessian CIs elsewhere, flagged as anti-conservative.
+
+## 11. Amendments recorded before the grid (2026-09-16 evening, before `results/hashes.json` exists)
+
+Each amendment was made on the basis of a synthetic test or a design constraint, not on grid results, and
+is dated here so the pre-registration record is complete.
+
+- **A1 Correlated random effects in the shadow model (section 5, `agentsem`).** `tests/test_shadow.py`
+  showed the random-effects likelihood biased (psi +0.06, phi the mirror image) whenever the person-level
+  mean of the surrogate is correlated with theta, which is the trap structure itself; on the real base
+  replicate the fit gave phi 0.895, psi 0.576. The policy's dose is informative about theta beyond the
+  stream (the read is private), so p(theta | g) is not N(0, phi) and the sequential-likelihood argument
+  does not apply between persons. The model becomes `eta_it = theta_i + d_it + psi * g_it + b * gbar_i +
+  e_it` with `gbar_i` the person's mean surrogate over included occasions and `theta_i ~ N(0, phi_u)`
+  independent of `gbar_i` (Mundlak). psi is identified from within-person variation of the logged exposure
+  path only; `Var(theta) = phi_u + b^2 Var(gbar)`; person scores add `b * gbar_i`. When exposure does not
+  vary between persons (kappa 0, uniform help) the term is dropped; when g is identically zero psi is
+  reported as not identified and the specificity statistics as not applicable. The within-person
+  identification still rests on the drift not feeding back into the dose; `G_nodrift` isolates that
+  channel and the base cell measures it.
+- **A2 R4 gains an exposure-pattern test (section 5.2).** Every shadow in this world is signed by the
+  person, so pooled mean shifts cannot see a mis-specified surrogate shape. D5's assumption
+  `E[resid_it | exposure_i] = 0` is tested directly: adaptive occasions split into three equal windows per
+  person; the correlation over persons between window-mean residual and `gbar_i` is computed per window;
+  the smallest two-sided p below `exposure_p_max = 0.01` makes claim B `unsupported` under rule R4. The
+  statistic is undefined (and the rule silent) when `gbar` has no variance. `rules.json` carries the two
+  new numbers.
+- **A3 Optional Jev policy arm (sections 2.2 and 6; JEV-CONSTRAINT-20260916.md).** A new policy value
+  `external` lets the runner supply the dose from a callable that sees only past stream values, past doses,
+  the switch and the adaptive mask. The Jev policy (`trapworld/jev.py`) asks one Score question per person
+  every 7 occasions from a bounded 7-day state and maps the probability-weighted level to a dose on the
+  ew policy's scale. Latent truth, shadow, criteria and outcome are untouched; the counterfactual for dW is
+  the no-dose policy; `implied_r` uses `Cov(abar, theta)/Var(theta)`. Sweep J holds `J_fake` (fake
+  transport, 50 reps, a plumbing check that is not a Jev result) and `J_live` (5 reps, runs only in a
+  separately orchestrated live session with an ephemeral credential; recorded as not run otherwise). Jev
+  cells are excluded from every headline aggregate. A failed call makes the replicate missing, never
+  substituted.
+- **A4 Bootstrap fits** warm-start from the point estimate and skip the Hessian; the percentile interval
+  is the bootstrap CI (F17).
+- **A5 Sweep J cells and the Jev policy configuration are hashed into `results/hashes.json`** alongside the
+  frozen objects of section 9.

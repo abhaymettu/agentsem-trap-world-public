@@ -6,3 +6,5 @@ __pycache__/
 .remember/
 *.log
 results/cache/
+results/grid/
+results/bootstrap/

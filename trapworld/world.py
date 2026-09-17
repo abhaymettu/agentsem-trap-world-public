@@ -23,6 +23,10 @@ Conventions decided here (the spec leaves them open):
   carries no person information, so ``kappa_eff`` and the implied contamination share are 0.
 * ``jitter`` is returned as None when ``var_jitter = 0``; the logged randomized component
   only exists in the D2 arm, and that is what the "or None" in the contract is for.
+* ``policy = "external"`` (spec 11 A3) hands the dose to a caller-supplied callable that
+  sees only past occasions. It is a policy arm and nothing else: the trait, the drift, the
+  shadow, the criteria and the outcome are generated exactly as for every other arm and
+  never read the callable's output except through the logged dose.
 """
 
 from __future__ import annotations
@@ -144,11 +148,18 @@ def _draw_noise(pr: dict, kids: list) -> dict:
 
 # --------------------------------------------------------------------------- dynamics
 def _run(pr: dict, nz: dict, kappa: float, policy: str,
-         switch_fixed: np.ndarray | None = None, perm: np.ndarray | None = None) -> dict:
+         switch_fixed: np.ndarray | None = None, perm: np.ndarray | None = None,
+         external_policy=None) -> dict:
     """One pass of the time loop, vectorized over persons.
 
     ``kappa`` and ``policy`` are passed in rather than read from ``pr`` so the kappa = 0
     counterfactual can reuse the identical noise draws.
+
+    ``external_policy(t, view)`` supplies the dose for ``policy = "external"``. ``view``
+    holds occasions strictly before ``t`` plus the switch times and the adaptive mask, so
+    an external policy obeys the same "information through t - 1" rule as the built-in
+    ones and can never see theta, the drift, the shadow, the belief or the outcome. The
+    arrays in ``view`` are live slices of this run's buffers; a policy must only read them.
     """
     N, T, p = pr["N"], pr["T"], pr["p"]
     T0 = pr["T0"]
@@ -191,6 +202,10 @@ def _run(pr: dict, nz: dict, kappa: float, policy: str,
         # 1. dose: actions at t use information through t - 1 only.
         if policy == "uniform":
             dose[:, t] = np.where(adaptive, 1.0, 0.0)
+        elif policy == "external":
+            view = {"t": t, "y": y[:, :t], "dose": dose[:, :t],
+                    "switch": switch, "adaptive": adaptive}
+            dose[:, t] = np.where(adaptive, external_policy(t, view), 0.0)
         elif policy != "none":
             dose[:, t] = np.where(adaptive, kappa * belief_prev + nz["jitter"][:, t], 0.0)
 
@@ -247,9 +262,15 @@ def _run(pr: dict, nz: dict, kappa: float, policy: str,
 
 
 # --------------------------------------------------------------------------- entry point
-def simulate(cell: dict, seed: int | np.random.SeedSequence) -> World:
-    """Generate one replicate of the trap world."""
+def simulate(cell: dict, seed: int | np.random.SeedSequence,
+             external_policy=None) -> World:
+    """Generate one replicate of the trap world.
+
+    ``external_policy`` is required by, and only used by, ``policy = "external"``.
+    """
     pr = resolve(cell)
+    if pr["policy"] == "external" and external_policy is None:
+        raise ValueError('policy "external" needs an external_policy callable')
     ss = seed if isinstance(seed, np.random.SeedSequence) else np.random.SeedSequence(seed)
     # SeedSequence.spawn mutates its parent's child counter, so spawning straight off the
     # caller's object would hand a second call to simulate a different set of nine streams.
@@ -266,10 +287,12 @@ def simulate(cell: dict, seed: int | np.random.SeedSequence) -> World:
         # F8 null. It uses the otherwise idle bootstrap stream, so no substantive stream moves.
         perm = np.random.Generator(np.random.PCG64(kids[8])).permutation(pr["N"])
 
-    run = _run(pr, nz, kappa, policy, perm=perm)
+    run = _run(pr, nz, kappa, policy, perm=perm, external_policy=external_policy)
 
     # kappa = 0 counterfactual on the same draws; a uniform arm's counterfactual is no help.
-    cf_policy = "none" if policy == "uniform" else policy
+    # The external arm's dose is not a function of kappa either, so its counterfactual is
+    # the no-dose policy as well, which also keeps the counterfactual free of extra calls.
+    cf_policy = "none" if policy in ("uniform", "external") else policy
     cf = _run(pr, nz, 0.0, cf_policy, switch_fixed=run["switch"], perm=perm)
 
     N, T = pr["N"], pr["T"]
@@ -284,7 +307,15 @@ def simulate(cell: dict, seed: int | np.random.SeedSequence) -> World:
     C_react = pr["lam_C"] * theta + pr["gamma_C"] * abar + nz["crit"][:, 1]
 
     var_theta_hidden = float(np.var(theta, ddof=1)) if N > 1 else 0.0
-    if kappa == 0.0 or var_theta_hidden <= 0.0:
+    if var_theta_hidden <= 0.0:
+        kappa_eff = 0.0
+    elif policy == "external":
+        # The external arm forms no belief the world can see, so kappa_eff is read off the
+        # logged dose itself: Cov(abar, theta)/Var(theta). This equals the spec 2.5 formula
+        # kappa * Cov(bhat, theta)/Var(theta) up to the one-occasion lag between the belief
+        # and the dose it drives, because there abar is kappa * (lagged mean belief).
+        kappa_eff = float(np.cov(abar, theta, ddof=1)[0, 1]) / var_theta_hidden
+    elif kappa == 0.0:
         kappa_eff = 0.0
     else:
         kappa_eff = kappa * float(np.cov(belief_mean, theta, ddof=1)[0, 1]) / var_theta_hidden

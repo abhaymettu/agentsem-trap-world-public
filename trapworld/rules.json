@@ -1,0 +1,9 @@
+{"R1": {"rule": "version logged for every occasion"},
+ "R2": {"min_anchor_len": 7, "switch_corr_max": 0.10, "switch_p_max": 0.01},
+ "R3": {"cond_max": 30},
+ "R4": {"shift_sd_max": 0.15, "changepoint_margin": 3, "exposure_windows": 3,
+        "exposure_p_max": 0.01},
+ "R5": {"dcfi_max": 0.01},
+ "R6": {"hetero_ratio_max": 1.5},
+ "D2": {"first_stage_F_min": 10},
+ "precedence": ["unknown", "unsupported", "bounded", "identified"]}

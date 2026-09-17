@@ -18,7 +18,7 @@ after the grid run. Pre-registered design in `specs/001-trap-world/spec.md`.
 | B2.2 exogenous surrogate + overlap check, `unsupported` on failure | fixed | certificate R2/R3/R4/R5/R6 and D2 gate in `trapworld/rules.json`, `trapworld/certificate.py`. |
 | B2.3 narrow statement of the rule | fixed | README states: condition only on action variation exogenous to the person, proven from the design (the anchor or the logged randomized component). |
 | B3 not an instance of Theorem 1 | by design | README states this is a logged-action world and Theorem 1 does not bite; the finding is "ordinary validation does not notice a fully logged driver". |
-| B3.2 heterogeneous psi nonidentification | partly | G3 cells with rho_psitheta in {0, .3, .6}; certificate returns `bounded` with the anchor fallback. The formal identified-set derivation is open (HANDOFF). |
+| B3.2 heterogeneous psi nonidentification | partly | G3 cells with rho_psitheta in {0, .3, .6}. Rule R6 as pre-registered cannot fire at these parameters: its ratio sits below 1 in every test world (0.26 to 0.96) because the person effect is estimated from the residual the numerator uses, so heterogeneous responsiveness is not detectable from the residual variance at N = 200 and tau_psi = 0.5. The G3 cells therefore report the bias the identified-set problem produces, with the certificate silent on it. The formal identified-set derivation is open (HANDOFF). |
 | B3.3 homogeneous vs person-specific psi | fixed | `tau_psi`, `rho_psitheta` are grid factors. |
 | B4 circular validation | fixed | misspecification grid G1..G4c against one frozen surrogate (spec 6 sweep B); surrogate set hashed before the run (`results/hashes.json`). |
 | B4.1 G4 must return `unsupported` | fixed | rule R4; kill test F7 = SC4 (>= 95% `unsupported` under B_G4). RESULT: _filled after run_ |
@@ -38,7 +38,7 @@ after the grid run. Pre-registered design in `specs/001-trap-world/spec.md`.
 | S5 false-refusal rate | fixed | reported as a pair with false confidence per cell (`P4_certificate.png`). |
 | S6 invariance testing | fixed | two-occasion longitudinal CFA (configural/metric/scalar) in the battery; kill test F10 via sweep C; pass rates reported with and without the invariance component. RESULT: _filled_ |
 | S7 competent preprocessing | fixed | `detrend` analyzer (occasion FE + person-specific linear trend, level at the switch); F11. RESULT: _filled_ |
-| S8 competitor set | fixed | naive, naive_pooled, epoch_fe, belief_partial, dose_partial, detrend, anchor_only, agentsem, agentsem_d2, misspecified. F12 paired difference agentsem minus epoch_fe with MC SE. RESULT: _filled_ |
+| S8 competitor set | fixed | naive, naive_pooled, epoch_fe, belief_partial, dose_partial, detrend, anchor_only, agentsem, agentsem_d2, misspecified. F12 paired difference agentsem minus epoch_fe with MC SE. Settled by arithmetic before the grid: occasion fixed effects subtract the cross-person mean of each indicator at each occasion, and the person-signed shadow has zero cross-person mean, so `epoch_fe` returns exactly `naive_pooled` (`tests/test_analyzers.py` pins the identity). RESULT: _filled_ |
 | S9 gamma and psi independent; equal-help arm | fixed | gamma_C x psi x kappa full sweep; `G_uniform` cell (R7). RESULT: _filled_ |
 | S10 criterion position | fixed (2 of 3) | clean and policy-downstream criteria in every replicate, plus the true outcome W; the compliance/selection position is open (HANDOFF). |
 | S11 heuristic and learning policies | fixed | `heuristic` and `kalman` policy cells (sweep D). RESULT: _filled_ |
@@ -48,6 +48,16 @@ after the grid run. Pre-registered design in `specs/001-trap-world/spec.md`.
 | S15 leakage: encoder | by design | the stream summary is a fixed Bartlett composite on the anchor-calibrated loadings, not learned on adaptive logs. |
 | S15 leakage: seeds | fixed | nine spawned streams per replicate; reorder/subprocess determinism tests. |
 | S16 parameter table | fixed | spec 2.6 with a justification per parameter; `trapworld/params.py`; hashed. |
+
+## Amendments made before the grid (spec section 11, dated 2026-09-16)
+
+| item | status | where / evidence |
+|---|---|---|
+| A1 correlated random effects in the shadow model | fixed | `tests/test_shadow.py` showed the random-effects likelihood biased whenever exposure correlates with theta (psi +0.06 with the mirror image in `Var(theta)`; on the real base replicate psi 0.576, `Var(theta)` 0.895). The policy reads the person privately, so its actions carry information about theta beyond the stream and the sequential-likelihood argument fails between persons. `fit_shadow(between=True)` adds `b * gbar_i`; base replicate now `Var(theta)` 0.960, psi 0.504. The remaining assumption is that drift does not feed back into the dose (`G_nodrift` isolates it). |
+| A2 R4 exposure-pattern test | fixed | Pooled shift tests cannot see a mis-specified surrogate when every shadow is signed by the person. Window-mean residual vs `gbar_i`, p < .01, `rules.json`. Fires on G2 and on the wrong surrogate (p below 1e-40 at N = 1000); on the matched G1 world its signal is the drift-feedback channel (window correlations .06 to .08, vanishing with sd_d = 0), 0 of 20 refusals at N = 200. |
+| A3 optional Jev policy arm | fixed | `trapworld/jev.py`, `JEV-LIVE-RUN.md`; fake transport only in this repo; no live call made. |
+| A4 bootstrap warm start | fixed | `analyzers.py::_bootstrap`; 0.29 s per bootstrap fit. |
+| A5 Jev objects hashed | fixed | `results/hashes.json` carries `jev_policy_hash`. |
 
 ## Falsification suite
 

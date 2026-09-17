@@ -18,7 +18,7 @@ PARAMS = dict(
     p=5, loadings=(1.0, 0.9, 0.8, 0.7, 0.6), intercepts=(0.0,) * 5, var_eps=(1.0,) * 5,
     shadow_pattern="proportional",            # or "nonproportional" -> nu = NU_NONPROPORTIONAL
     n_nuisance=3, nuisance_loading=0.7, nuisance_var_eps=1.0,
-    policy="ew",                              # "ew" | "kalman" | "heuristic" | "uniform" | "none"
+    policy="ew",                              # "ew" | "kalman" | "heuristic" | "uniform" | "none" | "external"
     var_read=2.0, gain_ew=0.3, kappa=1.0, policy_reads_stream=False, var_jitter=0.0,
     trigger="calendar",                       # or "performance"
     generator="cumulative",                   # "cumulative"|"recency"|"hetero"|"unlogged"|"unlogged_plus"|"none"
