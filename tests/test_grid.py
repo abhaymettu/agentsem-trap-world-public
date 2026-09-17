@@ -10,6 +10,7 @@ from __future__ import annotations
 import csv
 import importlib
 import json
+import os
 import pathlib
 import subprocess
 import sys
@@ -271,3 +272,107 @@ def test_sweep_j_rows_are_labelled_and_nothing_pools_cells(smoke):
     assert summary["headline_sweeps"] == list(grid.HEADLINE_SWEEPS)
     assert "J" not in summary["headline_sweeps"]
     assert set(summary) == {"generated_utc", "headline_sweeps", "rows"}
+
+
+# ----------------------------------------------- 9. seed discipline (task 6 item 3)
+def test_master_seed_moves_every_one_of_the_nine_streams():
+    """A different root entropy must move all nine spawned streams, not just theta."""
+    from trapworld import world as world_module
+    from trapworld.params import STREAM_ORDER, resolve
+
+    def draws(master):
+        kids = np.random.SeedSequence(master).spawn(9)
+        nz = world_module._draw_noise(resolve({"var_jitter": 0.25, "N": 60}), kids)
+        states = {name: list(kid.generate_state(4)) for name, kid in zip(STREAM_ORDER, kids)}
+        arrays = {"theta": nz["theta"], "drift": nz["theta_t"] - nz["theta"][:, None],
+                  "eps": nz["eps"], "nuisance": nz["z"], "read": nz["read_noise"],
+                  "jitter": nz["jitter"], "criterion": nz["crit"], "outcome": nz["w_noise"]}
+        return states, arrays
+
+    a_states, a_draws = draws(PARAMS["master_seed"])
+    b_states, b_draws = draws(PARAMS["master_seed"] + 1)
+    for name in STREAM_ORDER:
+        assert a_states[name] != b_states[name], name
+    for name, arr in a_draws.items():
+        assert not np.array_equal(arr, b_draws[name]), name
+
+
+def test_the_bootstrap_stream_does_not_alter_the_generated_data():
+    """Stream 9 (`bootstrap`) is the resampler's, and drawing from it must not move a
+    single value of the world the resampler is resampling."""
+    fields = ("y", "z", "dose", "version", "switch", "C_clean", "C_react", "W",
+              "theta", "theta_t", "delta", "psi_i", "belief")
+    w = simulate({"N": 120}, 5)
+    before = {k: np.array(getattr(w, k), copy=True) for k in fields}
+    first = run_analyzer("agentsem", w, bootstrap=5)
+    for k in fields:
+        np.testing.assert_array_equal(before[k], getattr(w, k), err_msg=k)
+    again = run_analyzer("agentsem", w, bootstrap=5)
+    assert first["extras"]["boot_ci_phi"] == again["extras"]["boot_ci_phi"]
+    fresh = simulate({"N": 120}, 5)
+    for k in fields:
+        np.testing.assert_array_equal(before[k], getattr(fresh, k), err_msg=k)
+
+
+def test_two_replicates_of_one_cell_never_share_the_theta_draw():
+    cell = {"N": 60, "policy": "none"}
+    for cell_index in (0, len(grid.CELLS) - 1):
+        thetas = [simulate(cell, run_grid.replicate_seed(cell_index, rep)).theta
+                  for rep in range(5)]
+        for i in range(len(thetas)):
+            for j in range(i + 1, len(thetas)):
+                assert not np.array_equal(thetas[i], thetas[j]), (cell_index, i, j)
+                shared = set(np.round(thetas[i], 12)) & set(np.round(thetas[j], 12))
+                assert not shared, (cell_index, i, j, len(shared))
+    # and the same replicate index in two cells is a different draw
+    assert not np.array_equal(simulate(cell, run_grid.replicate_seed(0, 0)).theta,
+                              simulate(cell, run_grid.replicate_seed(1, 0)).theta)
+
+
+def test_work_unit_in_a_subprocess_matches_in_process():
+    """A worker process must produce byte-identical JSON to the parent (spec SC2)."""
+    cell_index, rep = grid.CELL_INDEX["G_d2"], 2
+    here = json.dumps(run_grid.run_replicate(cell_index, rep), sort_keys=True)
+    code = ("import json;from trapworld import run_grid;"
+            f"print(json.dumps(run_grid.run_replicate({cell_index},{rep}),sort_keys=True))")
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
+                         check=True)
+    assert out.stdout.strip() == here
+
+
+# -------------------------------- 10. hash discipline on the real file (spec 11 A5)
+def test_editing_rules_json_on_disk_fails_check_hashes(tmp_path):
+    """The monkeypatched version above proves the comparison; this one proves that an
+    edit to the file itself is what gets compared."""
+    import shutil
+
+    pkg = pathlib.Path(run_grid.__file__).parent
+    scratch = tmp_path / "pkg"
+    shutil.copytree(pkg, scratch / "trapworld",
+                    ignore=shutil.ignore_patterns("__pycache__"))
+    out_dir = tmp_path / "out"
+    env = {**os.environ, "PYTHONPATH": str(scratch)}
+
+    def run(*args):
+        return subprocess.run([sys.executable, *args], capture_output=True, text=True,
+                              cwd=scratch, env=env)
+
+    assert run("-c", f"from pathlib import Path; from trapworld.run_grid import write_hashes;"
+                     f" write_hashes(Path({str(out_dir)!r}))").returncode == 0
+    assert run("-m", "trapworld.run_grid", "--check-hashes",
+               "--out", str(out_dir)).returncode == 0
+
+    rules = scratch / "trapworld" / "rules.json"
+    text = rules.read_text()
+    edited = text.replace('"shift_sd_max": 0.15', '"shift_sd_max": 0.16', 1)
+    assert sum(1 for a, b in zip(text, edited) if a != b) == 1, "not a one-character edit"
+    rules.write_text(edited)
+
+    bad = run("-m", "trapworld.run_grid", "--check-hashes", "--out", str(out_dir))
+    assert bad.returncode == 1, bad.stdout
+    assert "HASH MISMATCH" in bad.stdout
+    assert "rules_hash" in bad.stdout
+
+    rules.write_text(text)
+    assert run("-m", "trapworld.run_grid", "--check-hashes",
+               "--out", str(out_dir)).returncode == 0

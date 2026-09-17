@@ -314,3 +314,87 @@ def test_fake_arm_dW_is_finite(fake_world):
     print(f"\nfake Jev arm: dW = {world.dW:.6f}, dW_se = {world.params['dW_se']:.6f}, "
           f"dW/dW_se = {world.dW / world.params['dW_se']:.2f}, "
           f"implied_r = {world.implied_r:.6f}")
+
+
+# --------------------------------------------------------- 11. no socket, ever (A3)
+def test_nothing_in_the_fake_arm_can_reach_the_network(monkeypatch):
+    """Hard guard: every outbound socket entry point raises for the whole call."""
+    import socket
+
+    class Blocked(RuntimeError):
+        pass
+
+    def block(*args, **kwargs):
+        raise Blocked("a network call was attempted")
+
+    for name in ("connect", "connect_ex"):
+        monkeypatch.setattr(socket.socket, name, block, raising=False)
+    for name in ("create_connection", "getaddrinfo", "gethostbyname"):
+        monkeypatch.setattr(socket, name, block, raising=False)
+
+    world, log, policy = run_fake(cell={"N": 30})
+    assert policy.n_calls > 0 and log.summary()["n_failed"] == 0
+    assert np.all(np.isfinite(world.dose))
+    assert log.summary()["returned_models"] == [jev.FAKE_MODEL_NAME]
+
+    # and the guard really is armed
+    with pytest.raises(Blocked):
+        socket.getaddrinfo("example.invalid", 443)
+
+
+def test_the_fake_transport_sits_off_the_nine_dgp_streams():
+    """`make_transport` uses child 9 of the replicate seed; children 0 to 8 are the DGP."""
+    ss = np.random.SeedSequence(SEED)
+    before = [list(np.random.SeedSequence(entropy=ss.entropy,
+                                          spawn_key=tuple(ss.spawn_key) + (k,),
+                                          pool_size=ss.pool_size).generate_state(4))
+              for k in range(9)]
+    transport = jev.make_transport("fake", ss, "J_fake", 0)
+    after = [list(np.random.SeedSequence(entropy=ss.entropy,
+                                         spawn_key=tuple(ss.spawn_key) + (k,),
+                                         pool_size=ss.pool_size).generate_state(4))
+             for k in range(9)]
+    assert before == after
+    assert list(transport.ss.spawn_key) == list(ss.spawn_key) + [9]
+    assert list(transport.ss.generate_state(4)) not in before
+
+
+# ----------------------------------------------- 12. missingness through the runner
+def test_a_failed_call_leaves_the_replicate_out_of_every_rate(monkeypatch, tmp_path):
+    """spec 11 A3: a failed call makes the replicate missing, counted in `n_failed`
+    and in no mean, no rate and no status distribution."""
+    from trapworld import grid, metrics, run_grid
+
+    real_make = jev.make_transport
+    fail_rep = 1
+
+    def patched(kind, ss, cell_id, rep, recorded_dir=None):
+        transport = real_make(kind, ss, cell_id, rep, recorded_dir)
+        if rep == fail_rep:
+            transport.fail_at = (3, 21)     # person 3, a real decision occasion
+        return transport
+
+    monkeypatch.setattr(jev, "make_transport", patched)
+    index = grid.CELL_INDEX["J_fake"]
+    records = [run_grid.run_replicate(index, rep, log_dir=str(tmp_path),
+                                      analyzer_names=("agentsem", "naive"))
+               for rep in range(3)]
+
+    failed = records[fail_rep]
+    assert failed["jev_status"] == "failed"
+    assert "analyzers" not in failed
+    assert set(failed) == {"cell_id", "rep", "policy", "jev_status", "jev_failure", "jev"}
+    assert failed["jev_failure"] == {"person": 3, "occasion": 21,
+                                     "failure_class": "http_529"}
+    assert failed["jev"]["n_failed"] == 1
+    for ok in (records[0], records[2]):
+        assert ok["jev_status"] == "ok" and "analyzers" in ok
+
+    agg = metrics.aggregate(records)
+    assert agg["n_reps"] == 3 and agg["n_scored"] == 2 and agg["n_failed"] == 1
+    assert agg["jev"]["status"]["counts"] == {"failed": 1, "ok": 2}
+    for arm in ("agentsem", "naive"):
+        for key, summary in agg["analyzers"][arm].items():
+            if isinstance(summary, dict) and "n" in summary:
+                assert summary["n"] in (0, 2), (arm, key, summary["n"])
+    assert agg["analyzers"]["agentsem"]["status_B"]["n"] == 2

@@ -50,11 +50,14 @@ __all__ = ["main", "run_replicate", "replicate_seed", "compute_hashes", "check_h
 
 #: The frozen objects, in the order the hash table prints them (spec 9, 11 A5).
 HASH_KEYS = ("params_hash", "grid_hash", "surrogate_hash", "rules_hash",
-             "certificate_src_sha256", "analyzers_src_sha256", "jev_policy_hash")
+             "certificate_src_sha256", "analyzers_src_sha256", "jev_policy_hash",
+             "runner_src_sha256")
 
-#: Replicates timed before deciding whether a cell is too slow, and the limit (spec 6).
+#: Replicates timed before deciding whether a cell is too slow, and the limit (spec 6, relaxed
+#: by amendment A6: the 3 s rule fired on scheduling contention from unrelated processes,
+#: not on analyzer cost, which is 1.3 s per replicate in one process).
 PROBE_REPS = 10
-SLOW_SECONDS = 3.0
+SLOW_SECONDS = 8.0
 HALVE_ABOVE_REPS = 100
 
 SMOKE_REPS = 2
@@ -88,6 +91,9 @@ def compute_hashes() -> dict:
         "certificate_src_sha256": _sha256_bytes(Path(certificate.__file__)),
         "analyzers_src_sha256": _sha256_bytes(Path(analyzers_module.__file__)),
         "jev_policy_hash": canonical_hash(jev_module.JEV_POLICY),
+        # The runner decides which replicates run and how they are scored; a change to it
+        # after a run is as visible as a change to the rules.
+        "runner_src_sha256": _sha256_bytes(Path(__file__)),
     }
 
 
@@ -441,6 +447,7 @@ def main(argv=None) -> int:
         "mode": "bootstrap" if args.bootstrap else "grid",
         "start_utc": started, "end_utc": _now(), "elapsed_seconds": elapsed,
         "workers": workers, "jev": args.jev, "bootstrap": bootstrap,
+        "slow_seconds": SLOW_SECONDS, "probe_reps": PROBE_REPS,
         "J_live": j_live_state,
         "master_seed": PARAMS["master_seed"], "grid_hash": grid.GRID_HASH,
         "cells": selected,

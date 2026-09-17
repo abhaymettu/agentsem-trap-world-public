@@ -343,9 +343,14 @@ def _agentsem_diagnostics(world, anchor_scores, g, fit) -> dict:
         s = float(v.std())
         return v / s if s > 1e-12 else v
 
+    # R3 conditions the design the shadow model actually fits.  When no dose was ever logged
+    # (kappa 0) the surrogate is identically zero and is not in the model, so it is not in
+    # the design either; a zero column would only manufacture an infinite condition number.
     a_flat = adaptive.ravel().astype(float)
-    M = np.column_stack([np.ones(a_flat.size), unit(a_flat), unit(g.ravel())])
-    cond_number = float(np.linalg.cond(M))
+    cols = [np.ones(a_flat.size), unit(a_flat)]
+    if fit["psi_identified"]:
+        cols.append(unit(g.ravel()))
+    cond_number = float(np.linalg.cond(np.column_stack(cols)))
 
     gbar = person_mean(g, np.ones_like(adaptive))
     var_g_total = float(np.var(g, ddof=1)) if g.size > 1 else 0.0
@@ -547,17 +552,17 @@ def analyzer_agentsem_d2(world, bootstrap: int = 0) -> dict:
     }
 
     if world.jitter is None:
-        # Nothing to instrument with: the design is simply not available here.
+        # Nothing to instrument with: the design is simply not available here, so the arm
+        # has no person scores either.  NaN scores make corr, rmse and beta_clean_hat NaN
+        # (None in the results), rather than borrowing another analyzer's numbers.
         diag.update({"first_stage_F": 0.0, "phi_B": None, "ci_B": None,
                      "psi": None, "psi_ci": None})
         cert = certify(diag, "D2")
-        X_adapt = _mean_over(y, adaptive)
-        scores = bartlett_scores(X_adapt, fit_one_factor(X_adapt))
-        return _result(world, scores, cert["B"]["estimate"], ci=cert["B"]["ci"],
+        return _result(world, np.full(n, np.nan), cert["B"]["estimate"], ci=cert["B"]["ci"],
                        certificate=cert,
                        extras={"phi_A": phi_A, "ci_A": ci_A, "phi_B_raw": None,
                                "jitter_logged": False, "first_stage_F": None,
-                               "ci_method": "delta_approx", "design": "D2"})
+                               "ci_method": "none", "design": "D2"})
 
     X_adapt = _mean_over(y, adaptive)
     sfit = fit_one_factor(X_adapt)
@@ -569,11 +574,19 @@ def analyzer_agentsem_d2(world, bootstrap: int = 0) -> dict:
     z = surrogate_g1(np.asarray(world.jitter, float), switch, T_a)
     iv = iv_shadow(eta, g, z, adaptive)
 
-    corrected = eta - iv["psi"] * g
-    scores = person_mean(corrected, adaptive)
+    eta_bar = person_mean(eta, adaptive)
+    g_bar = person_mean(g, adaptive)
+    scores = eta_bar - iv["psi"] * g_bar
     sev = _score_error_var(sfit)
     phi_B = float(np.var(scores, ddof=1) - sev)
-    ci_B = _delta_approx_ci(phi_B, n, sev)
+    # phi_B is a function of the estimated psi, so its interval carries the IV error through
+    # the delta method: d phi_B / d psi = -2 cov(scores, g_bar).  Without that term the
+    # interval is about a quarter as wide as the estimate's own spread at N = 200.
+    se_var = float(np.sqrt(2.0 / max(n - 1, 1)) * (phi_B + sev))
+    dphi_dpsi = -2.0 * float(np.cov(scores, g_bar, ddof=1)[0, 1])
+    se_psi_iv = float(iv["se"]) if np.isfinite(iv["se"]) else float("nan")
+    se_B = float(np.sqrt(se_var ** 2 + (dphi_dpsi * se_psi_iv) ** 2))
+    ci_B = (phi_B - 1.96 * se_B, phi_B + 1.96 * se_B)
 
     diag.update({"first_stage_F": float(iv["first_stage_F"]), "phi_B": phi_B, "ci_B": ci_B,
                  "psi": float(iv["psi"]), "psi_ci": tuple(float(v) for v in iv["ci"])})
@@ -586,7 +599,7 @@ def analyzer_agentsem_d2(world, bootstrap: int = 0) -> dict:
               "jitter_logged": True, "first_stage_F": float(iv["first_stage_F"]),
               "psi_se": se_psi, "psi_ci90": tuple(float(v) for v in psi_ci90),
               "score_error_var": sev, "innocent": innocent, "detects": detects,
-              "ci_method": "delta_approx", "design": "D2"}
+              "ci_method": "delta_iv", "design": "D2"}
     return _result(world, scores, cert["B"]["estimate"], ci=cert["B"]["ci"],
                    psi_hat=float(iv["psi"]), certificate=cert, extras=extras)
 

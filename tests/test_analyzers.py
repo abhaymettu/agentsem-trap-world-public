@@ -54,17 +54,57 @@ def result(key: str, name: str) -> dict:
     return _RESULTS[(key, name)]
 
 
+class GuardedParams(dict):
+    """`world.params` with only the design constants the analyst is allowed to know.
+
+    The frozen table carries the answer (`psi`, `kappa`, `var_theta`, `generator`,
+    `kappa_eff`) next to genuine design facts, so a guard that only blocks attributes
+    leaves `world.params["psi"]` wide open.  Everything outside `ALLOWED` raises.
+    """
+
+    #: T and T0 are the logged occasion count and the deployment's own switch time;
+    #: `smd_psi` is the pre-registered equivalence margin; `bootstrap_seed` is an RNG
+    #: handle for F17.  Nothing else in the table is observable.
+    ALLOWED = frozenset({"T", "T0", "smd_psi", "bootstrap_seed"})
+
+    def __getitem__(self, key):
+        self._check(key)
+        return super().__getitem__(key)
+
+    def get(self, key, default=None):
+        self._check(key)
+        return super().get(key, default)
+
+    @staticmethod
+    def _check(key):
+        if key not in GuardedParams.ALLOWED:
+            raise AssertionError(f"analyzer read hidden parameter params[{key!r}]")
+
+
 class NoHiddenTruth:
-    """A world whose hidden fields raise, except `theta` (metrics may read that one)."""
+    """A world whose hidden fields raise, whose params are guarded, and which counts
+    every read of `theta`.
+
+    `theta` is not blocked because `analyzers._result` reads it once to report `corr`
+    and `rmse`.  It is counted instead, so an estimator that used it would show up as a
+    second read even though the first one is legitimate.
+    """
 
     BLOCKED = ("belief_logged", "belief", "theta_t", "delta", "psi_i", "implied_r", "dW")
 
-    def __init__(self, base):
+    def __init__(self, base, allow=()):
         object.__setattr__(self, "_base", base)
+        object.__setattr__(self, "_allow", frozenset(allow))
+        object.__setattr__(self, "_params", GuardedParams(base.params))
+        object.__setattr__(self, "reads", {})
 
     def __getattr__(self, name):
-        if name in NoHiddenTruth.BLOCKED:
+        object.__getattribute__(self, "reads")[name] = \
+            object.__getattribute__(self, "reads").get(name, 0) + 1
+        if name in NoHiddenTruth.BLOCKED and name not in object.__getattribute__(self, "_allow"):
             raise AssertionError(f"analyzer read hidden field {name!r}")
+        if name == "params":
+            return object.__getattribute__(self, "_params")
         return getattr(object.__getattribute__(self, "_base"), name)
 
 
@@ -137,7 +177,9 @@ def test_agentsem_identifies_and_recovers():
     cert = r["certificate"]
     assert cert["B"]["status"] == "identified", (cert["B"]["status"], cert["B"]["triggered"])
     assert cert["A"]["status"] == "identified"
-    assert abs(r["var_theta_hat"] - 1.0) < 0.15, r["var_theta_hat"]
+    # spec 4's primary tolerance is 0.10 absolute, so that is what the gate asserts.
+    # Observed at N = 1000 seed 1: 0.93554, |bias| 0.06446, margin 0.0355.
+    assert abs(r["var_theta_hat"] - 1.0) <= 0.10, r["var_theta_hat"]
     assert abs(r["psi_hat"] - 0.5) < 0.15, r["psi_hat"]
     assert r["corr"] > 0.9, r["corr"]
     assert r["extras"]["converged"] and not r["extras"]["between_dropped"]
@@ -254,14 +296,48 @@ def test_d2_without_jitter_is_unsupported():
 # 13. the information guard ----------------------------------------------------------
 @pytest.mark.parametrize("name", sorted(set(ANALYZERS) - {"belief_partial"}))
 def test_no_analyzer_but_belief_partial_reads_hidden_fields(name):
+    """No hidden attribute, no hidden parameter, and exactly one read of `theta`.
+
+    The single read is `analyzers._result`, which reports `corr` and `rmse`.  Any
+    estimator that consulted the truth would read it a second time.
+    """
     guarded = NoHiddenTruth(world("base"))
     r = run_analyzer(name, guarded)
     assert set(r) == SCHEMA
+    assert guarded.reads.get("theta") == 1, guarded.reads
+    assert not (set(guarded.reads) & set(NoHiddenTruth.BLOCKED)), guarded.reads
+
+
+def test_the_guard_would_catch_a_hidden_parameter_read():
+    """The guard has to be able to fail, or it is decoration."""
+    guarded = NoHiddenTruth(world("base"))
+    with pytest.raises(AssertionError):
+        guarded.params["psi"]
+    with pytest.raises(AssertionError):
+        guarded.params["kappa"]
+    with pytest.raises(AssertionError):
+        guarded.params["var_theta"]
+    with pytest.raises(AssertionError):
+        guarded.params.get("generator")
+    assert guarded.params["T0"] == world("base").params["T0"]
+
+
+def test_the_bootstrap_path_reads_nothing_hidden_either():
+    guarded = NoHiddenTruth(world("base"))
+    run_analyzer("agentsem", guarded, bootstrap=3)
+    assert guarded.reads.get("theta") == 1, guarded.reads
+    assert not (set(guarded.reads) & set(NoHiddenTruth.BLOCKED)), guarded.reads
 
 
 def test_belief_partial_is_the_one_that_needs_the_belief():
     with pytest.raises(AssertionError):
         run_analyzer("belief_partial", NoHiddenTruth(world("base")))
+    # and with the belief allowed through it is the only truth it needs
+    guarded = NoHiddenTruth(world("base"), allow=("belief_logged",))
+    r = run_analyzer("belief_partial", guarded)
+    assert set(r) == SCHEMA
+    assert guarded.reads.get("theta") == 1, guarded.reads
+    assert guarded.reads.get("belief") is None
 
 
 # the exposure statistic itself -------------------------------------------------------
@@ -288,14 +364,39 @@ def test_exposure_statistic_finds_a_planted_pattern():
 
 
 def test_exposure_windows_split_by_rank_within_the_person():
-    """Ragged adaptive phases still give three equal windows per person."""
+    """Ragged adaptive phases still give three windows per person, by the person's own rank.
+
+    The pattern is planted in each person's own first third, computed here by an
+    independent loop.  A split on absolute occasion instead would smear it: measured,
+    that wrong split gives window correlations [0.999, 0.919, -0.008] on this data,
+    so the window-1 assertion below is what makes the test able to fail.
+    """
+    rng = np.random.default_rng(0)
+    n, T, windows = 300, 30, 3
+    switch = np.tile([2, 5, 8, 11, 14], n // 5)
+    adaptive = np.arange(T)[None, :] >= switch[:, None]
+    x = rng.standard_normal(n)
+    resid = 0.05 * rng.standard_normal((n, T))
+    for i in range(n):
+        occ = np.flatnonzero(adaptive[i])
+        block = np.floor(np.arange(occ.size) * windows / occ.size).astype(int)
+        resid[i, occ[block == 0]] += 0.8 * x[i]
+
+    out = exposure_statistics(resid, adaptive, x, windows=windows)
+    assert out["exposure_corr"][0] > 0.9, out["exposure_corr"]
+    assert abs(out["exposure_corr"][1]) < 0.3, out["exposure_corr"]
+    assert abs(out["exposure_corr"][2]) < 0.3, out["exposure_corr"]
+    assert out["exposure_p"] < 1e-10
+
+
+def test_exposure_statistic_is_constant_safe_on_a_ragged_mask():
+    """A constant residual has no pattern to find, ragged phases or not."""
     n, T = 6, 20
     switch = np.array([2, 5, 8, 11, 14, 2])
     adaptive = np.arange(T)[None, :] >= switch[:, None]
-    resid = np.zeros((n, T))
-    x = np.arange(n, dtype=float)
-    out = exposure_statistics(resid, adaptive, x, windows=3)
-    assert out["exposure_corr"] == [0.0, 0.0, 0.0]   # constant residual, no pattern
+    out = exposure_statistics(np.zeros((n, T)), adaptive, np.arange(n, dtype=float), windows=3)
+    assert out["exposure_corr"] == [0.0, 0.0, 0.0]
+    assert out["exposure_p"] == 1.0
 
 
 # the bootstrap ------------------------------------------------------------------------
@@ -312,3 +413,114 @@ def test_bootstrap_replaces_the_interval_and_is_deterministic():
     plain = run_analyzer("agentsem", small)
     assert plain["extras"]["ci_method"] == "hessian_delta"
     assert plain["extras"]["phi_B_raw"] == a["extras"]["phi_B_raw"]
+
+
+# ---------------------------------------- defects found by the task 6 adversarial pass
+def test_d2_without_jitter_reports_no_person_metrics():
+    """Task 6 defect D3, fixed: an arm whose design is unavailable has no person scores,
+    so it reports NaN rather than borrowing the naive analyzer's numbers."""
+    d2, naive = result("base", "agentsem_d2"), result("base", "naive")
+    assert d2["var_theta_hat"] is None and d2["ci"] is None
+    assert d2["certificate"]["B"]["status"] == "unsupported"
+    assert np.isnan(d2["corr"]) and np.isnan(d2["rmse"]) and np.isnan(d2["beta_clean_hat"])
+    assert np.all(np.isnan(d2["scores"]))
+    assert np.isfinite(naive["corr"])
+
+
+def test_zero_exposure_keeps_the_r3_number_finite_and_reportable():
+    """Task 6 defect D4, fixed: with policy `none` the surrogate is identically zero and is
+    not in the model, so it is not in R3's design either.  The condition number stays
+    finite and reported, R3 stays silent, and claim B is certified from the plain
+    measurement model with psi fixed at 0."""
+    from trapworld import metrics
+
+    w = simulate({"N": 200, "policy": "none"}, 5)
+    r = run_analyzer("agentsem", w)
+    cert = r["certificate"]
+    assert np.isfinite(cert["B"]["numbers"]["cond_number"])
+    assert cert["B"]["numbers"]["cond_number"] < 30
+    assert "R3" not in cert["B"]["triggered"]
+    assert not r["extras"]["psi_identified"] and r["extras"]["between_dropped"]
+
+    block = metrics.replicate_metrics(w, {"agentsem": r})["analyzers"]["agentsem"]
+    assert "R3" not in block["triggered_B"]
+    assert block["cond_number"] is not None
+    assert block["false_refusal_strict"] in (True, False)
+
+
+def test_d2_interval_carries_the_instrument_error():
+    """Task 6 defect D2, fixed: the D2 arm's interval for Var(theta) includes the IV
+    error in psi through the delta method, so it is wider than the variance-only band."""
+    w = simulate({"N": 200, "var_jitter": 0.25}, 11)
+    d2 = run_analyzer("agentsem_d2", w)
+    assert d2["extras"]["ci_method"] == "delta_iv"
+    lo, hi = d2["extras"]["ci_B_raw"]
+    variance_only = np.sqrt(2.0 / 199) * (d2["extras"]["phi_B_raw"]
+                                          + d2["extras"]["score_error_var"]) * 2 * 1.96
+    assert hi - lo > variance_only
+    assert np.isfinite(d2["extras"]["psi_se"]) and d2["extras"]["psi_se"] > 0
+
+
+# -------------------------------------- spec 11 A1 on the real world (task 6b item 1)
+def _eta_and_g(cell, n, seed=SEED):
+    """The anchored occasion scores and the frozen surrogate for one real replicate."""
+    from trapworld.analyzers import _anchor_pipeline, _masks
+    from trapworld.world import surrogate_g1
+
+    w = simulate({**cell, "N": n}, seed)
+    _, anchor = _masks(w)
+    g = surrogate_g1(np.asarray(w.dose, float), np.asarray(w.switch, int),
+                     w.params["T"] - w.params["T0"])
+    *_, eta = _anchor_pipeline(np.asarray(w.y, float), anchor)
+    return eta, g
+
+
+def test_mundlak_total_is_exactly_phi_u_plus_b2_var_gbar():
+    """phi = phi_u + b^2 Var(gbar) on the real base world, to the bit, and within
+    tolerance of the truth (task-04-report: 0.936 at N = 1000 seed 1)."""
+    extras = result("base", "agentsem")["extras"]
+    total = extras["phi_u"] + extras["b"] ** 2 * extras["var_gbar"]
+    assert extras["phi_B_raw"] == total          # exact, not approx
+    assert abs(extras["phi_B_raw"] - 1.0) <= 0.10, extras["phi_B_raw"]
+    assert extras["var_gbar"] > 0 and not extras["between_dropped"]
+
+
+def test_between_false_still_shows_the_psi_bias_on_the_real_world():
+    """The mechanism pin of spec 11 A1, measured on `simulate` rather than on the
+    shadow model's own synthetic data: dropping the Mundlak term puts the between-person
+    signal back into psi.  Observed at N = 400 seed 1: psi +0.597 against +0.524."""
+    from trapworld.shadow import fit_shadow
+
+    eta, g = _eta_and_g({}, 400)
+    with_b = fit_shadow(eta, g, drift=True, between=True, hessian=False)
+    without = fit_shadow(eta, g, drift=True, between=False, hessian=False)
+    assert without["psi"] - 0.5 > 0.06, without["psi"]
+    assert 1.0 - without["phi"] > 0.06, without["phi"]
+    assert abs(with_b["psi"] - 0.5) < abs(without["psi"] - 0.5)
+    assert abs(with_b["phi"] - 1.0) < abs(without["phi"] - 1.0)
+
+
+def test_uniform_help_drops_the_between_term_bit_for_bit():
+    """The drop rule on the real uniform-help arm: a dose that is the same for everyone
+    leaves Var(gbar) at exactly 0, so the fit must equal the `between=False` fit."""
+    from trapworld.shadow import fit_shadow
+
+    eta, g = _eta_and_g({"policy": "uniform"}, 200)
+    dropped = fit_shadow(eta, g, drift=True, between=True, hessian=False)
+    plain = fit_shadow(eta, g, drift=True, between=False, hessian=False)
+    assert dropped["var_gbar"] == 0.0 and dropped["between_dropped"]
+    assert dropped["b"] == 0.0 and dropped["se"]["b"] is None
+    for key in ("phi", "phi_u", "psi", "rho_d", "var_d", "var_e", "loglik"):
+        assert dropped[key] == plain[key], key
+    assert np.array_equal(dropped["scores"], plain["scores"])
+    assert np.array_equal(dropped["resid"], plain["resid"])
+
+
+def test_uniform_help_leaves_the_exposure_rule_silent():
+    """R4's exposure half is undefined without between-person exposure, so it cannot
+    fire on the uniform arm (spec 11 A2)."""
+    w = simulate({"policy": "uniform", "N": 400}, SEED)
+    numbers = run_analyzer("agentsem", w)["certificate"]["B"]["numbers"]
+    assert numbers["exposure_p"] == 1.0
+    assert numbers["max_exposure_corr"] == 0.0
+    assert numbers["exposure_corr"] == [0.0, 0.0, 0.0]

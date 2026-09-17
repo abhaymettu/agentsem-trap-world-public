@@ -162,9 +162,14 @@ def _certificate_block(result: dict, truth: float, tolerance: float,
         "false_confidence": (None if abs_bias_ok is None
                              else bool(status_b == "identified" and not abs_bias_ok)),
         # A refusal is wrong only if the correction it refused to report was in fact good.
+        # The pre-registered form (spec 7) counts `bounded`, which still returns the anchor
+        # estimate; the strict form counts only `unsupported`, where nothing is returned.
         "false_refusal": bool(status_b in ("bounded", "unsupported")
                               and phi_b_raw is not None
                               and abs(phi_b_raw - truth) <= tolerance),
+        "false_refusal_strict": bool(status_b == "unsupported"
+                                     and phi_b_raw is not None
+                                     and abs(phi_b_raw - truth) <= tolerance),
         "innocent": extras.get("innocent"),
         "detects": extras.get("detects"),
     }

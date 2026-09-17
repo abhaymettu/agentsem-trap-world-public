@@ -404,3 +404,9 @@ is dated here so the pre-registration record is complete.
   is the bootstrap CI (F17).
 - **A5 Sweep J cells and the Jev policy configuration are hashed into `results/hashes.json`** alongside the
   frozen objects of section 9.
+- **A6 Runtime halving rule relaxed (section 6), 2026-09-16 22:40.** The 3 s per-replicate rule halved
+  cells during the first grid attempt because unrelated processes were loading the machine (replicates
+  cost 1.3 s in one process and 2.0 s on an idle pool); the threshold is 8 s for the run that produced
+  `results/`, recorded as `slow_seconds` in `run_manifest.json`. This changes how long the grid takes,
+  not what it computes: replicate seeds are fixed by position, so no replicate's data depends on the
+  rule.
