@@ -33,7 +33,8 @@ __all__ = ["derive_record", "main", "DERIVED_FIELDS"]
 
 DERIVED_FIELDS = ("bias_sample", "abs_bias_sample_ok", "false_confidence_sample",
                   "false_refusal_sample", "false_refusal_strict_sample",
-                  "false_conf_{tau}_sample", "false_conf_{tau}_with_invariance_sample")
+                  "false_conf_{tau}_sample", "false_conf_{tau}_with_invariance_sample",
+                  "bias_B_raw", "bias_B_raw_sample")
 
 
 def derive_record(record: dict, tolerance: float) -> dict:
@@ -53,6 +54,12 @@ def derive_record(record: dict, tolerance: float) -> dict:
             status = block["status_B"]
             raw = block.get("phi_B_raw")
             close = raw is not None and truth is not None and abs(float(raw) - float(truth)) <= tolerance
+            # The shadow model's own estimate, whatever the certificate then did with it, so
+            # a cell's bias is not read off a mix of estimators (audit MF1).
+            pop = record.get("var_theta")
+            block["bias_B_raw"] = None if raw is None or pop is None else float(raw) - float(pop)
+            block["bias_B_raw_sample"] = (None if raw is None or truth is None
+                                          else float(raw) - float(truth))
             block["false_confidence_sample"] = (None if ok is None
                                                 else bool(status == "identified" and not ok))
             block["false_refusal_sample"] = bool(status in ("bounded", "unsupported") and close)

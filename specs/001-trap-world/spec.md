@@ -1,6 +1,8 @@
 # Feature Specification: agentSEM trap-world simulation
 
-**Feature Branch**: `001-trap-world` | **Created**: 2026-09-16 | **Status**: frozen before grid run
+**Feature Branch**: `001-trap-world` | **Created**: 2026-09-16 | **Status**: frozen before the grid run of
+2026-09-17 00:14 (section 11: A1 to A5 pre-grid; A6 and A7 written after the run started, neither touches
+a hashed object, A7 is exploratory)
 **Sources**: BUILD-BRIEF.md, STEERING-20260916-1946.md, HARSH-REVIEW.md, and the three Obsidian specs
 (synthesis 2026-09-16, round 1, round 2). This document is the single authority for the build; the plan
 argues from it.
@@ -344,7 +346,7 @@ every between-arm difference (paired by replicate seed where arms share draws).
   by generator, certificate outcomes with the false-confidence/false-refusal pair, specificity ROC,
   zero-person world, F4 purity, coverage audit. Okabe-Ito palette, meaning also carried by marker
   shape and text labels (colour-blind reader).
-- `README.md`, `HANDOFF.md` (four sections: original claims killed; replacement result supported;
+- `README.md`, `MORNING-HANDOFF.md` (the handoff; four sections: original claims killed; replacement result supported;
   unresolved identification gaps; what must run next), `REVIEW-RESPONSE.md` (every B, S, F and
   checklist item: fixed where, or open why).
 

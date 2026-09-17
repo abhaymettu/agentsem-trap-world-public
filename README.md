@@ -7,13 +7,15 @@ The claim under test, in one sentence: a genuinely good adaptive agent improves 
 policy shadow in the logs; standard construct validation passes on the shadow; conventional SEM reports
 inflated person signal; a policy-aware correction recovers the truth.
 
-**Headline result: see `HANDOFF.md`** (killed claims, supported replacement, open gaps, next runs). The
+**Headline result: see `MORNING-HANDOFF.md`** (killed claims, supported replacement, open gaps, next runs). The
 numbers below are filled from `results/` after the grid run; nothing in this file is hand-typed from
 memory.
 
 ## What was killed by arithmetic before any simulation ran
 
-`python -m trapworld.closed_forms` writes `results/closed_forms.json`. Verdicts: _filled after run_.
+`python -m trapworld.closed_forms` writes `results/closed_forms.json`. Verdicts as written there: F1 "corr
+falls with u"; F2 "reliability up, validity down"; F3 "inflation conditional on r, hump-shaped in u"; F4
+"rule deletes the person"; F5 "benign arm killed at near-100% (review supported)".
 
 - K1 "validation correlation is inflated by (1 + psi*kappa)": the factor cancels out of any correlation.
   Under the synthesis's own linearization, correlation-based validity falls monotonically in adaptivity.
@@ -60,20 +62,25 @@ falsification map: `specs/001-trap-world/spec.md`.
 everyone, so the shadow is zero there by design) that calibrates the measurement model and pins the
 reference scale; the adaptive-phase shadow is modelled as a common proportional shift `psi * g1` with `g1`
 the normalized cumulative logged dose since the switch (the frozen surrogate set, hashed before the run).
-A state-space model `eta_it = theta_i + d_it + psi * g1_it + e_it` fitted by maximum likelihood gives
-`Var(theta)`, `psi`, and person scores. Because actions depend only on past information and the surrogate
-is a known function of the logged path, the likelihood factorizes sequentially and the estimator is valid
-under feedback (the likelihood principle), as long as the model is right. When it is not, the certificate
-must say so.
+A state-space model `eta_it = theta_i + d_it + psi * g1_it + b * gbar_i + e_it` fitted by maximum
+likelihood gives `Var(theta)`, `psi`, and person scores. The `b * gbar_i` term (spec section 11, A1) is
+there because the agent reads the person privately: its dose carries information about the person beyond
+the stream, so the person effect and the person's mean exposure `gbar_i` are correlated, and a plain
+random-effects likelihood pushes part of `Var(theta)` into `psi` (base replicate: `psi` 0.58,
+`Var(theta)` 0.89). A sequential-likelihood argument ("actions depend only on the past, so conditioning
+on them is free") does not hold here for that reason, and it is not what the correction rests on. With
+the term, `psi` is identified from within-person variation of the logged exposure path and
+`Var(theta) = phi_u + b^2 Var(gbar)`; what that still assumes is that the drift does not feed back into
+the dose (the no-drift cell isolates that channel, the base cell measures it).
 
-One amendment was made before the grid ran (spec section 11, A1). The policy's dose is informative about
-the person beyond the stream, because the agent reads the person privately, so the person effect and the
-person's exposure level are correlated and a plain random-effects likelihood pushes part of `Var(theta)`
-into `psi` (on the base replicate: `psi` 0.58, `Var(theta)` 0.89). The shadow model therefore carries a
-correlated-random-effects term, `b * gbar_i` with `gbar_i` the person's mean exposure (Mundlak): `psi` is
-identified from within-person variation of the logged exposure path only, and `Var(theta) = phi_u + b^2
-Var(gbar)`. What that identification still assumes is that the drift does not feed back into the dose;
-the no-drift cell isolates that channel and the base cell measures it.
+Two things about that estimator that the grid makes plain. Almost all of the recovered variance is the
+Mundlak term (`b^2 Var(gbar)` is 95% of the number at the base cell; `phi_u` is 0.05): the estimator
+recovers `Var(E[theta | logged exposure])` plus a small residual, which is F4's "dose is a .99 proxy for
+the trait" turned into an estimator rather than a mistake. And on `Var(theta)` alone the anchor epoch does
+the work: `anchor_only` is within tolerance (+.05, the drift term) in every cell, and the shadow model
+improves on it by .01 in absolute bias. What the shadow model adds is the person scores (rmse .19 against
+.29 for the anchor scores at the base cell) and the refusals: the certificate is what says no under the
+recency shadow and the unlogged driver.
 
 `agentsem_d2` instantiates **D2**: when the deployment logs a randomized component of the dose, the
 cumulative logged jitter instruments the surrogate within person; no anchor needed.
@@ -146,12 +153,37 @@ replicates can run in any order or in parallel with identical output (tested).
 
 ## Results
 
-_Filled after the grid run; see HANDOFF.md for the four-part summary and `results/summary.csv` for every
-number with its Monte Carlo standard error._
+Grid of 2026-09-17 (72 cells, 15,450 replicates, `results/summary.csv`; MC SE about .035 on a rate near
+0.5 and .005 to .013 on a bias mean). Full verdicts and named limits: `MORNING-HANDOFF.md`; the item-by-item
+review response: `REVIEW-RESPONSE.md`; the methods audit: `AUDIT.md`.
+
+- **Killed by arithmetic** (`results/closed_forms.json`): K1 (correlations fall in adaptivity; only the
+  variance rises) and K2 (cumulative dose is a .99 proxy for the trait at T = 56; partialling it kills the
+  benign arm .99 of the time).
+- **Reliability up, validity down** (R1/R3): naive omega .993 to .998 and naive Var(theta) bias +.03 to
+  +3.25 as u = psi kappa runs 0 to 2, person correlation .981 to .977, battery pass rate .93 to .98
+  everywhere with a person, including the longitudinal invariance test when the shadow is proportional to
+  the loadings (dCFI .0001). Invariance testing catches a nonproportional shadow (pass rate .94 to .15).
+- **Criterion contamination** (R2): present in direction, 1 to 2% in size against the policy-downstream
+  criterion; attenuation (.98) against the clean one.
+- **The correction** (R4): base-cell bias +.013 (MC SE .005), certified identified in .96, psi .48 for a
+  truth of .5; refuses claim B in 200 of 200 replicates under the recency shadow (G2) and the unlogged
+  driver (G4, G4b); bias +.001 to +.020 under heterogeneous responsiveness (G3), where epoch fixed effects
+  sit at +.45 (paired margin -.45, MC SE .005). Its Hessian interval covers only .55 to .63; the
+  full-pipeline person bootstrap covers .94 at the base cell and .93 under G3
+  (`results/coverage_audit.json`), so that is the interval to quote.
+- **Competitors** (R5): epoch fixed effects equal pooled naive (+.44 at the base cell); detrending repairs a
+  linear ramp (+.11) but not a saturating shadow (+.58); belief conditioning deletes the person (-.95); dose
+  partialling leaves a person correlation of .18.
+- **Specificity** (R6): innocence at psi 0 is .06 to .09 / .83 to .88 / 1.00 for kappa .5 / 1 / 2; detection reaches 1.00
+  by psi .2 at kappa 1.
+- **Uniform help** (R7) inflates nothing (+.036 naive); the **zero-person world** (R8) fools omega, fit and
+  convergent validity but fails test-retest, and the certificate refuses it in .88.
+- **Jev**: no live grid ran; the fake-transport cell is a plumbing check (naive +.48, agentsem +.055).
 
 ## Limitations and open items
 
-See `HANDOFF.md` section 3 and `REVIEW-RESPONSE.md` for the item-by-item status against the review.
+See `MORNING-HANDOFF.md` section 3, `AUDIT.md` and `REVIEW-RESPONSE.md` for the item-by-item status against the review.
 
 ## Layout
 
