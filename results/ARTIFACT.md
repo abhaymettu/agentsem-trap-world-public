@@ -8,6 +8,10 @@
 - Canonical local copy: ~/agentsem-archive/agentsem-trap-world-frozen-20260917.tar.gz (Mac)
 - Archive SHA-256: e651f38623be83703cdc4ebde6d5f8dbc5b803e35384dd8bb996eaaf6fe3e572
 
+## Backups
+
+Second independent private backup (2026-09-28): Google Drive folder agentsem-archive (folder ID 1x8ToJINj8aLBlW5e2nzU7pxZ0zM8WGNk), file ID 1MlfbEktY95STPrNnx4r01ZMWi5f3k0a4, revision 0B44jmaBPLFBxZ2hSV1Zzd1lxRG5VVmNhK0NMaVBUUzlRN3cwPQ. Owner-only permissions, no share links. Restore tested: downloaded back, SHA-256 e651f38623be83703cdc4ebde6d5f8dbc5b803e35384dd8bb996eaaf6fe3e572 matched.
+
 ## Integrity
 
 GitHub immutable-releases is NOT enabled on this repo, so the release is a SHA-verified versioned private asset, not cryptographically immutable storage. Integrity guarantee is the pinned SHA-256 chain:
