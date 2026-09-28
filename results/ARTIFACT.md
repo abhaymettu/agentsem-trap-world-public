@@ -1,6 +1,6 @@
 # Frozen trap-world grid artifact (2026-09-17)
 
-76 files, 190.3 MiB uncompressed: 73 grid records (results/grid/*.json) + 3 bootstrap records (results/bootstrap/*.json), generated 2026-09-17 (file mtimes Sep 17 04:18-04:24 CT) at pinned source 8ef2c3a467373052339d530ad950983b5afdae31.
+76 files, 190.3 MiB uncompressed: 73 grid records (results/grid/*.json) + 3 bootstrap records (results/bootstrap/*.json), generated 2026-09-16/17 (observed file mtimes: grid 2026-09-16 22:48 through 2026-09-17 00:37, bootstrap 00:50, all -0500 CDT) at pinned source 8ef2c3a467373052339d530ad950983b5afdae31.
 
 ## Where
 
@@ -12,7 +12,7 @@
 
 GitHub immutable-releases is NOT enabled on this repo, so the release is a SHA-verified versioned private asset, not cryptographically immutable storage. Integrity guarantee is the pinned SHA-256 chain:
 1. tar.gz SHA-256 above (GitHub asset digest verified identical at upload)
-2. Per-file SHA-256 manifest of all 76 records (full list retained in the working archive /tmp/agentsem-inventory and reproducible from the unpacked tar via shasum -a 256 results/grid/*.json results/bootstrap/*.json)
+2. Per-file SHA-256 manifest of all 76 records, committed in-repo at results/FROZEN_GRID_SHA256.txt (sha256 per file) and reproducible from the unpacked tar via shasum -a 256 results/grid/*.json results/bootstrap/*.json
 
 ## Verification
 
@@ -22,7 +22,7 @@ shasum -a 256 agentsem-trap-world-frozen-20260917.tar.gz   # expect e651f386...
 tar -xzf agentsem-trap-world-frozen-20260917.tar.gz
 ```
 
-Exact reproducibility verified 2026-09-28 on a clean checkout of pinned commit 8ef2c3a (read-only sampled repro, /tmp/reproduce_frozen_sample.py on the Mac, script SHA-256 be41cae3624fe60b419592d891adcd0f5af69173fde1e08d4275919e8e3e4097):
+Exact reproducibility verified 2026-09-28 on a clean checkout of pinned commit 8ef2c3a (read-only sampled repro, committed in-repo at scripts/reproduce_frozen_sample.py, script SHA-256 be41cae3624fe60b419592d891adcd0f5af69173fde1e08d4275919e8e3e4097):
 
 - 8/8 stored hash checks match: analyzers_src_sha256, certificate_src_sha256, grid_hash, jev_policy_hash, params_hash, rules_hash, runner_src_sha256, surrogate_hash
 - 12/12 sampled records re-run exactly equal (stored_record_hash == rerun_record_hash, first_diffs empty): cells A_k1.0_p0.5_g1.0 (cell_index 22), B_G2 (36), B_G3_r03 (38), B_G4 (40) x reps 0, 1, 19
