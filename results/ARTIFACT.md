@@ -21,8 +21,18 @@ gh release download frozen-grid-20260917 --repo abhaymettu/agentsem-trap-world
 shasum -a 256 agentsem-trap-world-frozen-20260917.tar.gz   # expect e651f386...
 tar -xzf agentsem-trap-world-frozen-20260917.tar.gz
 ```
-Exact reproducibility was verified 2026-09-28 on a clean checkout of the pinned commit: 8/8 file-hash matches and 12/12 sampled records (4 cells x reps 0,1,19) re-run exactly equal (agents_grid/proactive/rand_bias_json/trace_md5) with seed manager seed1234, python 3.12, pinned uv.lock 68eadfeb..., on darwin/arm64. Roundtrip verified: release asset re-downloaded, unpacked, all 76 per-file SHA-256 matched, and the same 12/12 repro passed from the downloaded bytes.
+
+Exact reproducibility verified 2026-09-28 on a clean checkout of pinned commit 8ef2c3a (read-only sampled repro, /tmp/reproduce_frozen_sample.py on the Mac, script SHA-256 be41cae3624fe60b419592d891adcd0f5af69173fde1e08d4275919e8e3e4097):
+
+- 8/8 stored hash checks match: analyzers_src_sha256, certificate_src_sha256, grid_hash, jev_policy_hash, params_hash, rules_hash, runner_src_sha256, surrogate_hash
+- 12/12 sampled records re-run exactly equal (stored_record_hash == rerun_record_hash, first_diffs empty): cells A_k1.0_p0.5_g1.0 (cell_index 22), B_G2 (36), B_G3_r03 (38), B_G4 (40) x reps 0, 1, 19
+- stored manifest: master_seed 20260916, manifest_sha256 8a0a2a22977ff9ef7f140a12e9e4844653e47beac94907a9ad4aee47f7255143; stored hash-file sha256 075c54cb0664d471db94971bf7a931113c288543083a865343d504c4d070ba3e
+- environment: python 3.13.14, numpy 2.5.3, scipy 1.18.1, macOS arm64, pinned uv.lock 68eadfeba4d30611583cc6d0c70290941b4dbe689660e81598850c865c296e40
+- A7 exploratory *_sample fields are stripped from stored records, so stored excerpts show shadow_raw_bias: null by design
+- caveat from the repro receipt: repo_head_external_check_required = true (clean-checkout HEAD was verified against the pinned ref separately)
+
+Roundtrip verified: release asset re-downloaded, unpacked, all 76 per-file SHA-256 matched, and the same 12/12 repro passed from the downloaded bytes.
 
 ## Retention
 
-Keep indefinitely as the frozen evidence base for the trap-world benchmark. Not derived-regenerable cheaply (20 reps x 12 cells). Local archive + private release asset; treat as the canonical source for any future analysis or paper artifact appendix.
+Keep indefinitely as the frozen evidence base for the trap-world benchmark. Not derived-regenerable cheaply (full grid run; sampled repro covers only the verification slice). Local archive + private release asset; treat as the canonical source for any future analysis or paper artifact appendix.
