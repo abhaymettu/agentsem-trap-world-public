@@ -24,6 +24,7 @@ GitHub immutable-releases is NOT enabled on this repo, so the release is a SHA-v
 gh release download frozen-grid-20260917 --repo abhaymettu/agentsem-trap-world
 shasum -a 256 agentsem-trap-world-frozen-20260917.tar.gz   # expect e651f386...
 tar -xzf agentsem-trap-world-frozen-20260917.tar.gz
+sha256sum -c results/FROZEN_GRID_SHA256.txt   # run from the repo root containing results/; expect 76 OK, 0 FAILED
 ```
 
 Exact reproducibility verified 2026-09-28 on a clean checkout of pinned commit 8ef2c3a (read-only sampled repro, committed in-repo at scripts/reproduce_frozen_sample.py, script SHA-256 be41cae3624fe60b419592d891adcd0f5af69173fde1e08d4275919e8e3e4097):
