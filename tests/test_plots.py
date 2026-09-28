@@ -10,6 +10,7 @@ is not a failure.
 
 from __future__ import annotations
 
+import os
 import pathlib
 
 import pytest
@@ -84,9 +85,15 @@ def test_r4_split_matches_the_stored_triggered_list():
     """The exposure/shift split must reproduce `triggered_B` exactly, not approximate it."""
     from trapworld import plots
 
+    cell_ids = ("A_k1.0_p0.5_g1.0", "B_G2", "B_G4")
+    missing = [c for c in cell_ids if not (RESULTS / "grid" / f"{c}.json").is_file()]
+    if missing:
+        if os.environ.get("AGENTSEM_REQUIRE_GRID_FIXTURES") == "1" or len(missing) < len(cell_ids):
+            pytest.fail(f"missing grid fixture(s): {', '.join(missing)}")
+        pytest.skip("grid fixtures not restored; use AGENTSEM_REQUIRE_GRID_FIXTURES=1 for integration")
     res = plots.Results(RESULTS)
     checked = 0
-    for cell_id in ("A_k1.0_p0.5_g1.0", "B_G2", "B_G4"):
+    for cell_id in cell_ids:
         for rec in res.cell(cell_id).get("records", []):
             arm = rec.get("analyzers", {}).get("agentsem")
             if arm is None:
@@ -98,3 +105,4 @@ def test_r4_split_matches_the_stored_triggered_list():
             assert "?" not in category and "other" not in category
             checked += 1
     assert checked > 0
+
