@@ -1,0 +1,19 @@
+{
+  "analyzers": [
+    "anchor_only",
+    "naive",
+    "naive_pooled",
+    "epoch_fe",
+    "detrend",
+    "misspecified",
+    "agentsem"
+  ],
+  "analyzers_src_sha256": "7b579123e03aaeb080b0ba2958df7df5b57da93b48fa70c89483fbb48c2e79eb",
+  "cells_hash": "6709bb1f08c70dbbac93dd54e22b21d2d16369a177d96c75dedee2a9ab912810",
+  "frozen_hashes_mismatches": 0,
+  "params_hash": "794350658829523081b38aadf34cd8c173e912d9f6fe220246c451db6185405b",
+  "reps": 200,
+  "script_src_sha256": "e29ec82cfb189b24fdad0dd5971c771a4c0b1bbb827e0fcd7212e9504abf5e4b",
+  "seed_block": 3000,
+  "world_src_sha256": "498db72bb0870d64ddd8792f2bd53054fecdad14948cb0f082db93f575db72de"
+}

@@ -1,6 +1,7 @@
 """The crossover sweep's registry and scorer (scripts/crossover_sweep.py)."""
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -38,3 +39,12 @@ def test_crossing_interpolates_the_first_sign_change():
     assert xs._verdict({"mean": -0.05, "mc_se": 0.001}) == "H"
     assert xs._verdict({"mean": 0.05, "mc_se": 0.001}) == "F"
     assert xs._verdict({"mean": 0.001, "mc_se": 0.001}) == "T"
+
+
+def test_stored_cells_match_the_registry():
+    reg = json.loads((xs.OUT / "registry.json").read_text())
+    assert reg["cells_hash"] == xs.CELLS_HASH
+    for cell in reg["cells"]:
+        payload = json.loads((xs.OUT / "cells" / f"{cell['cell_id']}.json").read_text())
+        assert payload["cell"] == cell
+        assert payload["info"]["reps"] == xs.REPS and payload["info"]["n_errors"] == 0

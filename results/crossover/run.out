@@ -25,3 +25,48 @@
   return (float(value * np.exp(-1.96 * s)), float(value * np.exp(1.96 * s)))
 21:59:49 X_P_k1_p0.9 done errors 0 elapsed 2344s (2000/8000 replicates)
 22:03:36 X_P_k2_p0.15 done errors 0 elapsed 2571s (2200/8000 replicates)
+22:06:23 X_P_k2_p0.175 done errors 0 elapsed 2738s (2400/8000 replicates)
+22:08:57 X_P_k2_p0.225 done errors 0 elapsed 2892s (2600/8000 replicates)
+22:11:32 X_P_k2_p0.25 done errors 0 elapsed 3047s (2800/8000 replicates)
+22:14:06 X_P_k2_p0.275 done errors 0 elapsed 3201s (3000/8000 replicates)
+22:16:55 X_P_k2_p0.325 done errors 0 elapsed 3370s (3200/8000 replicates)
+~/code/agentsem-trap-world/trapworld/shadow.py:281: RuntimeWarning: overflow encountered in exp
+  return (float(value * np.exp(-1.96 * s)), float(value * np.exp(1.96 * s)))
+~/code/agentsem-trap-world/trapworld/shadow.py:281: RuntimeWarning: overflow encountered in exp
+  return (float(value * np.exp(-1.96 * s)), float(value * np.exp(1.96 * s)))
+22:20:43 X_P_k2_p0.35 done errors 0 elapsed 3598s (3400/8000 replicates)
+22:25:51 X_P_k2_p0.375 done errors 0 elapsed 3906s (3600/8000 replicates)
+22:29:52 X_P_k2_p0.4 done errors 0 elapsed 4147s (3800/8000 replicates)
+22:34:43 X_P_k2_p0.45 done errors 0 elapsed 4438s (4000/8000 replicates)
+22:37:40 X_P_k2_p0.6 done errors 0 elapsed 4615s (4200/8000 replicates)
+22:40:35 X_P_k2_p0.75 done errors 0 elapsed 4790s (4408/8000 replicates)
+22:42:35 X_P_k0.5_p0.6 done errors 0 elapsed 4910s (4600/8000 replicates)
+22:44:45 X_P_k0.5_p0.7 done errors 0 elapsed 5040s (4800/8000 replicates)
+22:46:58 X_P_k0.5_p0.8 done errors 0 elapsed 5173s (5000/8000 replicates)
+22:49:16 X_P_k0.5_p0.9 done errors 0 elapsed 5311s (5204/8000 replicates)
+22:51:12 X_T_k1_p0.3_a7 done errors 0 elapsed 5427s (5400/8000 replicates)
+22:53:08 X_T_k1_p0.4_a7 done errors 0 elapsed 5542s (5600/8000 replicates)
+22:55:40 X_T_k1_p0.5_a7 done errors 0 elapsed 5695s (5800/8000 replicates)
+22:58:00 X_T_k1_p0.6_a7 done errors 0 elapsed 5835s (6000/8000 replicates)
+23:00:33 X_T_k1_p0.7_a7 done errors 0 elapsed 5988s (6200/8000 replicates)
+23:02:59 X_T_k1_p0.8_a7 done errors 0 elapsed 6134s (6400/8000 replicates)
+23:05:25 X_T_k1_p1_a7 done errors 0 elapsed 6280s (6608/8000 replicates)
+23:07:16 X_T_k1_p0.2_a28 done errors 0 elapsed 6391s (6800/8000 replicates)
+23:09:13 X_T_k1_p0.3_a28 done errors 0 elapsed 6508s (7000/8000 replicates)
+23:11:13 X_T_k1_p0.4_a28 done errors 0 elapsed 6628s (7204/8000 replicates)
+23:13:14 X_T_k1_p0.5_a28 done errors 0 elapsed 6749s (7400/8000 replicates)
+23:15:47 X_T_k1_p0.6_a28 done errors 0 elapsed 6902s (7600/8000 replicates)
+23:36:11 X_T_k1_p0.7_a28 done errors 0 elapsed 8126s (7800/8000 replicates)
+23:56:06 X_T_k1_p0.8_a28 done errors 0 elapsed 9321s (8000/8000 replicates)
+object                  stored            now               match
+params_hash             7943506588295230  7943506588295230  yes
+grid_hash               3538c9c81ecef5e2  3538c9c81ecef5e2  yes
+surrogate_hash          0f4193eefb0d8a55  0f4193eefb0d8a55  yes
+rules_hash              f86f2b6da5bd49cc  f86f2b6da5bd49cc  yes
+certificate_src_sha256  5eef7ba40939a38e  5eef7ba40939a38e  yes
+analyzers_src_sha256    7b579123e03aaeb0  7b579123e03aaeb0  yes
+jev_policy_hash         277ed85a9be5b8b8  277ed85a9be5b8b8  yes
+runner_src_sha256       f555e99e660f1d0e  f555e99e660f1d0e  yes
+all hashes match
+summarized 40 cells
+RUN-EXIT 0
