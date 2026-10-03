@@ -1,0 +1,27 @@
+21:24:28 X_P_k1_p0.35 done errors 0 elapsed 223s (200/8000 replicates)
+~/code/agentsem-trap-world/trapworld/shadow.py:281: RuntimeWarning: overflow encountered in exp
+  return (float(value * np.exp(-1.96 * s)), float(value * np.exp(1.96 * s)))
+21:28:00 X_P_k1_p0.4 done errors 0 elapsed 435s (400/8000 replicates)
+21:31:42 X_P_k1_p0.45 done errors 0 elapsed 657s (600/8000 replicates)
+~/code/agentsem-trap-world/trapworld/shadow.py:281: RuntimeWarning: overflow encountered in exp
+  return (float(value * np.exp(-1.96 * s)), float(value * np.exp(1.96 * s)))
+21:37:06 X_P_k1_p0.55 done errors 0 elapsed 981s (800/8000 replicates)
+21:40:43 X_P_k1_p0.6 done errors 0 elapsed 1198s (1000/8000 replicates)
+~/code/agentsem-trap-world/trapworld/shadow.py:281: RuntimeWarning: overflow encountered in exp
+  return (float(value * np.exp(-1.96 * s)), float(value * np.exp(1.96 * s)))
+~/code/agentsem-trap-world/trapworld/shadow.py:281: RuntimeWarning: overflow encountered in exp
+  return (float(value * np.exp(-1.96 * s)), float(value * np.exp(1.96 * s)))
+21:44:11 X_P_k1_p0.65 done errors 0 elapsed 1406s (1200/8000 replicates)
+~/code/agentsem-trap-world/trapworld/shadow.py:281: RuntimeWarning: overflow encountered in exp
+  return (float(value * np.exp(-1.96 * s)), float(value * np.exp(1.96 * s)))
+21:47:39 X_P_k1_p0.7 done errors 0 elapsed 1614s (1400/8000 replicates)
+~/code/agentsem-trap-world/trapworld/shadow.py:281: RuntimeWarning: overflow encountered in exp
+  return (float(value * np.exp(-1.96 * s)), float(value * np.exp(1.96 * s)))
+21:51:31 X_P_k1_p0.75 done errors 0 elapsed 1846s (1600/8000 replicates)
+21:55:42 X_P_k1_p0.8 done errors 0 elapsed 2097s (1800/8000 replicates)
+~/code/agentsem-trap-world/trapworld/shadow.py:281: RuntimeWarning: overflow encountered in exp
+  return (float(value * np.exp(-1.96 * s)), float(value * np.exp(1.96 * s)))
+~/code/agentsem-trap-world/trapworld/shadow.py:281: RuntimeWarning: overflow encountered in exp
+  return (float(value * np.exp(-1.96 * s)), float(value * np.exp(1.96 * s)))
+21:59:49 X_P_k1_p0.9 done errors 0 elapsed 2344s (2000/8000 replicates)
+22:03:36 X_P_k2_p0.15 done errors 0 elapsed 2571s (2200/8000 replicates)

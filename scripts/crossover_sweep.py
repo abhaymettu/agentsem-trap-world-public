@@ -203,6 +203,16 @@ def _payload(cell_id: str) -> dict:
     raise FileNotFoundError(cell_id)
 
 
+def _verdict(d: dict) -> str:
+    """H: the adaptive-phase estimator holds (beats the anchor by more than 2 mc_se);
+    F: it flips (worse than the anchor by more than 2 mc_se); T: tie within 2 mc_se."""
+    if d["mean"] is None:
+        return "none"
+    if abs(d["mean"]) < 2 * d["mc_se"]:
+        return "T"
+    return "F" if d["mean"] > 0 else "H"
+
+
 def _crossing(points: list[tuple[float, float, float]]):
     """First sign change of the mean along the ladder, linearly interpolated.
 
@@ -248,13 +258,13 @@ def score() -> None:
                    if r[name]["mean"] is not None]
             cross, band = _crossing(pts)
             out["crossings"][key][name] = {"crossing": cross, "band": band}
-        lines.append(f"\n## ladder {key}  (paired rmse_X - rmse_anchor_only, mean (mc_se))")
+        lines.append(f"\n## ladder {key}  (paired rmse_X - rmse_anchor_only, mean (mc_se) verdict H/F/T)")
         lines.append("| cell | product | anchor rmse | " + " | ".join(COMPARED) + " |")
         lines.append("|---|---|---|" + "---|" * len(COMPARED))
         for r in table:
             cells_txt = " | ".join(
-                f"{r[n]['mean']:+.4f} ({r[n]['mc_se']:.4f})" if r[n]["mean"] is not None else "none"
-                for n in COMPARED)
+                f"{r[n]['mean']:+.4f} ({r[n]['mc_se']:.4f}) {_verdict(r[n])}"
+                if r[n]["mean"] is not None else "none" for n in COMPARED)
             lines.append(f"| {r['cell_id']} | {r['product']:g} | {r['anchor_rmse']:.4f} | {cells_txt} |")
         lines.append("crossings: " + "; ".join(
             f"{n} {out['crossings'][key][n]['crossing']:.3f}" if out['crossings'][key][n]['crossing'] is not None
