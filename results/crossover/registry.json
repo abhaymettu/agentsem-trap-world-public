@@ -1,0 +1,436 @@
+{
+  "analyzers": [
+    "anchor_only",
+    "naive",
+    "naive_pooled",
+    "epoch_fe",
+    "detrend",
+    "misspecified",
+    "agentsem"
+  ],
+  "analyzers_src_sha256": "7b579123e03aaeb080b0ba2958df7df5b57da93b48fa70c89483fbb48c2e79eb",
+  "cells": [
+    {
+      "block": "P",
+      "cell_id": "X_P_k1_p0.35",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.35,
+      "psi": 0.35,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k1_p0.4",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.4,
+      "psi": 0.4,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k1_p0.45",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.45,
+      "psi": 0.45,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k1_p0.55",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.55,
+      "psi": 0.55,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k1_p0.6",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.6,
+      "psi": 0.6,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k1_p0.65",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.65,
+      "psi": 0.65,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k1_p0.7",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.7,
+      "psi": 0.7,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k1_p0.75",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.75,
+      "psi": 0.75,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k1_p0.8",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.8,
+      "psi": 0.8,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k1_p0.9",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.9,
+      "psi": 0.9,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k2_p0.15",
+      "gamma_C": 1.0,
+      "kappa": 2.0,
+      "product": 0.3,
+      "psi": 0.15,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k2_p0.175",
+      "gamma_C": 1.0,
+      "kappa": 2.0,
+      "product": 0.35,
+      "psi": 0.175,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k2_p0.225",
+      "gamma_C": 1.0,
+      "kappa": 2.0,
+      "product": 0.45,
+      "psi": 0.225,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k2_p0.25",
+      "gamma_C": 1.0,
+      "kappa": 2.0,
+      "product": 0.5,
+      "psi": 0.25,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k2_p0.275",
+      "gamma_C": 1.0,
+      "kappa": 2.0,
+      "product": 0.55,
+      "psi": 0.275,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k2_p0.325",
+      "gamma_C": 1.0,
+      "kappa": 2.0,
+      "product": 0.65,
+      "psi": 0.325,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k2_p0.35",
+      "gamma_C": 1.0,
+      "kappa": 2.0,
+      "product": 0.7,
+      "psi": 0.35,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k2_p0.375",
+      "gamma_C": 1.0,
+      "kappa": 2.0,
+      "product": 0.75,
+      "psi": 0.375,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k2_p0.4",
+      "gamma_C": 1.0,
+      "kappa": 2.0,
+      "product": 0.8,
+      "psi": 0.4,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k2_p0.45",
+      "gamma_C": 1.0,
+      "kappa": 2.0,
+      "product": 0.9,
+      "psi": 0.45,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k2_p0.6",
+      "gamma_C": 1.0,
+      "kappa": 2.0,
+      "product": 1.2,
+      "psi": 0.6,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k2_p0.75",
+      "gamma_C": 1.0,
+      "kappa": 2.0,
+      "product": 1.5,
+      "psi": 0.75,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k0.5_p0.6",
+      "gamma_C": 1.0,
+      "kappa": 0.5,
+      "product": 0.3,
+      "psi": 0.6,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k0.5_p0.7",
+      "gamma_C": 1.0,
+      "kappa": 0.5,
+      "product": 0.35,
+      "psi": 0.7,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k0.5_p0.8",
+      "gamma_C": 1.0,
+      "kappa": 0.5,
+      "product": 0.4,
+      "psi": 0.8,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "block": "P",
+      "cell_id": "X_P_k0.5_p0.9",
+      "gamma_C": 1.0,
+      "kappa": 0.5,
+      "product": 0.45,
+      "psi": 0.9,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "T0": 7,
+      "block": "T",
+      "cell_id": "X_T_k1_p0.3_a7",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.3,
+      "psi": 0.3,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "T0": 7,
+      "block": "T",
+      "cell_id": "X_T_k1_p0.4_a7",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.4,
+      "psi": 0.4,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "T0": 7,
+      "block": "T",
+      "cell_id": "X_T_k1_p0.5_a7",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.5,
+      "psi": 0.5,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "T0": 7,
+      "block": "T",
+      "cell_id": "X_T_k1_p0.6_a7",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.6,
+      "psi": 0.6,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "T0": 7,
+      "block": "T",
+      "cell_id": "X_T_k1_p0.7_a7",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.7,
+      "psi": 0.7,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "T0": 7,
+      "block": "T",
+      "cell_id": "X_T_k1_p0.8_a7",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.8,
+      "psi": 0.8,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "T0": 7,
+      "block": "T",
+      "cell_id": "X_T_k1_p1_a7",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 1.0,
+      "psi": 1.0,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "T0": 28,
+      "block": "T",
+      "cell_id": "X_T_k1_p0.2_a28",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.2,
+      "psi": 0.2,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "T0": 28,
+      "block": "T",
+      "cell_id": "X_T_k1_p0.3_a28",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.3,
+      "psi": 0.3,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "T0": 28,
+      "block": "T",
+      "cell_id": "X_T_k1_p0.4_a28",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.4,
+      "psi": 0.4,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "T0": 28,
+      "block": "T",
+      "cell_id": "X_T_k1_p0.5_a28",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.5,
+      "psi": 0.5,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "T0": 28,
+      "block": "T",
+      "cell_id": "X_T_k1_p0.6_a28",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.6,
+      "psi": 0.6,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "T0": 28,
+      "block": "T",
+      "cell_id": "X_T_k1_p0.7_a28",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.7,
+      "psi": 0.7,
+      "reps": 200,
+      "sweep": "X"
+    },
+    {
+      "T0": 28,
+      "block": "T",
+      "cell_id": "X_T_k1_p0.8_a28",
+      "gamma_C": 1.0,
+      "kappa": 1.0,
+      "product": 0.8,
+      "psi": 0.8,
+      "reps": 200,
+      "sweep": "X"
+    }
+  ],
+  "cells_hash": "6709bb1f08c70dbbac93dd54e22b21d2d16369a177d96c75dedee2a9ab912810",
+  "frozen_hashes_mismatches": 0,
+  "params_hash": "794350658829523081b38aadf34cd8c173e912d9f6fe220246c451db6185405b",
+  "registered_at": "2026-10-02T21:18:37",
+  "reps": 200,
+  "script_src_sha256": "e969abc878873b712b107dff3b29c72fa1eec8ebb1b49a05813cdf3c3f87c8ed",
+  "seed_block": 3000,
+  "world_src_sha256": "498db72bb0870d64ddd8792f2bd53054fecdad14948cb0f082db93f575db72de"
+}
