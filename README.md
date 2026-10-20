@@ -7,7 +7,7 @@ The claim under test, in one sentence: a genuinely good adaptive agent improves 
 policy shadow in the logs; standard construct validation passes on the shadow; conventional SEM reports
 inflated person signal; a policy-aware correction recovers the truth.
 
-**Headline result: see `MORNING-HANDOFF.md`** (killed claims, supported replacement, open gaps, next runs). The
+**Headline result: see `REVIEW-RESPONSE.md` and `results/summary.csv`** (killed claims, supported replacement, open gaps, next runs). The
 numbers below are filled from `results/` after the grid run; nothing in this file is hand-typed from
 memory.
 
@@ -154,7 +154,7 @@ replicates can run in any order or in parallel with identical output (tested).
 ## Results
 
 Grid of 2026-09-17 (72 cells, 15,450 replicates, `results/summary.csv`; MC SE about .035 on a rate near
-0.5 and .005 to .013 on a bias mean). Full verdicts and named limits: `MORNING-HANDOFF.md`; the item-by-item
+0.5 and .005 to .013 on a bias mean). Full verdicts and named limits: `REVIEW-RESPONSE.md` and `AUDIT.md`; the item-by-item
 review response: `REVIEW-RESPONSE.md`; the methods audit: `AUDIT.md`.
 
 - **Killed by arithmetic** (`results/closed_forms.json`): K1 (correlations fall in adaptivity; only the
@@ -183,7 +183,7 @@ review response: `REVIEW-RESPONSE.md`; the methods audit: `AUDIT.md`.
 
 ## Limitations and open items
 
-See `MORNING-HANDOFF.md` section 3, `AUDIT.md` and `REVIEW-RESPONSE.md` for the item-by-item status against the review.
+See `AUDIT.md` and `REVIEW-RESPONSE.md` for the item-by-item status against the review.
 
 ## Layout
 
